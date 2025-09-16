@@ -25,8 +25,8 @@ const [formData, setFormData] = useState({
   propertyAddress: '',
   motivation: '',
   squareFootage: '',
-  propertyCondition: '',
-  renovations: '',           // ← Add this
+propertyCondition: '',
+renovations: '',           // ← Add this
   sellingTimeline: '',   
   currentOwe: '',
   otherDebts: '',
@@ -128,11 +128,6 @@ Object.assign(payload, {
 
   return payload;
 };
-
-  
-
-
-
 
 
 
@@ -393,7 +388,7 @@ payload = {
   <>
 {formData.leadType === "Seller" && (
   <div className="mb-6">
-    <h2 className="text-xl font-semibold mb-4 text-white">Contact Information</h2>
+    <h2 className="text-xl font-semibold mb-4 text-white">Seller Information</h2>
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     <input
       type="text"
@@ -436,18 +431,9 @@ payload = {
       required
     />
   </div>
-    <h2 className="text-xl font-semibold mb-4 text-white">Seller Information</h2>
+    <h2 className="text-xl font-semibold m-3 text-white">Property Type</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <input
-        type="text"
-        name="propertyAddress"
-        value={formData.propertyAddress || ""}
-        onChange={handleChange}
-        placeholder="Property Address *"
-        className="bg-slate-700 p-3 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-        style={{ backgroundColor: "#4D4D4D" }}
-        required
-      />
+
       <select
         name="propertyType"
         value={formData.propertyType || ""}
@@ -462,6 +448,7 @@ payload = {
         <option value="Land">Land</option>
         <option value="Other">Other</option>
       </select>
+
       <select
         name="motivation"
         value={formData.motivation || ""}
@@ -493,16 +480,7 @@ payload = {
         <option value="6+ months">6+ months</option>
         <option value="Exploring Options">Just exploring options</option>
       </select>
-      <input
-        type="text"
-        name="squareFootage"
-        value={formData.squareFootage || ""}
-        onChange={handleChange}
-        placeholder="Approximate Square Footage"
-        className="bg-slate-700 p-3 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-        style={{ backgroundColor: "#4D4D4D" }}
-      />
-
+      
       <select
         name="propertyCondition"
         value={formData.propertyCondition || ""}
@@ -517,51 +495,79 @@ payload = {
         <option value="4">4</option>
         <option value="5">5 - Excellent</option>
       </select>
+    <h2 className="text-xl font-semibold  text-white">Property Description</h2><br></br>
+            <input
+        type="text"
+        name="propertyAddress"
+        value={formData.propertyAddress || ""}
+        onChange={handleChange}
+        placeholder="Property Address *"
+        className="bg-slate-700 p-3 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+        style={{ backgroundColor: "#4D4D4D" }}
+        required
+      />
+      
+      <input
+        type="text"
+        name="squareFootage"
+        value={formData.squareFootage || ""}
+        onChange={handleChange}
+        placeholder="Approximate Square Footage of property"
+        className="bg-slate-700 p-3 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+        style={{ backgroundColor: "#4D4D4D" }}
+      />
+    <p className="text-lg font-semibold  text-white">Any major renovations or repairs planned or recently completed ?</p>
+
       <input
         type="text"
         name="renovations"
         value={formData.renovations || ""}
         onChange={handleChange}
-        placeholder="Major renovations/repairs planned or recently completed"
+        placeholder="Explain"
         className="bg-slate-700 p-3 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 col-span-2"
         style={{ backgroundColor: "#4D4D4D" }}
       />
+          <p className="text-lg font-semibold  text-white">do you currently owe on the property ?</p>
 
       <input
         type="text"
         name="currentOwe"
         value={formData.currentOwe || ""}
         onChange={handleChange}
-        placeholder="What do you currently owe on the property?"
+        placeholder="Explain"
         className="bg-slate-700 p-3 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 col-span-2"
         style={{ backgroundColor: "#4D4D4D" }}
       />
+                <p className="text-lg font-semibold  text-white">Any other debts or lines secured on the property ?</p>
+
       <input
         type="text"
         name="otherDebts"
         value={formData.otherDebts || ""}
         onChange={handleChange}
-        placeholder="Any other debts? (home equity, credit lines, etc.)"
+        placeholder="debts? (home equity, credit lines, etc.)"
         className="bg-slate-700 p-3 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 col-span-2"
         style={{ backgroundColor: "#4D4D4D" }}
       />
+          <p className="text-lg font-semibold  text-white">Do you think the property is Worth ?</p>
 
       <input
         type="text"
         name="estimatedValue"
         value={formData.estimatedValue || ""}
         onChange={handleChange}
-        placeholder="What do you think the property is worth?"
+        placeholder="Yes/No"
         className="bg-slate-700 p-3 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 col-span-2"
         style={{ backgroundColor: "#4D4D4D" }}
       />
+          <p className="text-lg font-semibold  text-white">Best time time to come by and see Property</p>
 
       <input
         type="text"
         name="bestVisitTime"
         value={formData.bestVisitTime || ""}
         onChange={handleChange}
-        placeholder="Best time to come by and see the property"
+        placeholder="Date"
         className="bg-slate-700 p-3 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 col-span-2"
         style={{ backgroundColor: "#4D4D4D" }}
       />
@@ -580,6 +586,7 @@ payload = {
         <option value="Advertisement">Advertisement</option>
         <option value="Previous Client">Previous Client</option>
       </select>
+          <p className="text-lg font-semibold  text-white">Anything else you need me to know beforew i come by ?</p>
 
       <textarea
         name="additionalNotes"
