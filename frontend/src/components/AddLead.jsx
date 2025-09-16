@@ -13,7 +13,7 @@ const [formData, setFormData] = useState({
   lastName: '',
   email: '',
   phoneNumber: '',
-  leadType: '',
+  leadType: 'Buyer',
 
   propertyType: '',
   budgetRange: '',
@@ -25,8 +25,8 @@ const [formData, setFormData] = useState({
   propertyAddress: '',
   motivation: '',
   squareFootage: '',
-propertyCondition: '',
-renovations: '',           // ← Add this
+  propertyCondition: '',
+  renovations: '',           // ← Add this
   sellingTimeline: '',   
   currentOwe: '',
   otherDebts: '',
