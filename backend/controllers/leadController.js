@@ -1,252 +1,277 @@
-const { Readable } = require('stream');
-const csv = require('csv-parser');
-const supabase = require('../db/supabaseClient');
-const { addLeadSchema } = require('../schemas/leadSchema');
+const { Readable } = require("stream");
+const csv = require("csv-parser");
+const supabase = require("../db/supabaseClient");
+const { addLeadSchema } = require("../schemas/leadSchema");
 const { sendMail, scheduleLeadEmails } = require("../mailer");
+const { sendSellerMail, scheduleSellerLeadEmails } = require("../mailer2");
 
 // Define required headers for the CSV file
 const REQUIRED_HEADERS = [
-    'first_name',
-    'last_name',
-    'email',
-    'phone_number',
-    'status',
-    'source',
-    'type',
-    'notes',
-    'property_type',
-    'budget_range',
-    'preferred_location',
-    'bedrooms',
-    'bathrooms',
-    'timeline',
-    'social_media'
+  "first_name",
+  "last_name",
+  "email",
+  "phone_number",
+  "status",
+  "source",
+  "type",
+  "notes",
+  "property_type",
+  "budget_range",
+  "preferred_location",
+  "bedrooms",
+  "bathrooms",
+  "timeline",
+  "social_media",
 ];
 
 // Helper function to safely parse integer values, handling empty strings and non-numeric input
 const parseInteger = (value) => {
-    if (value === null || value === undefined || value.trim() === '') {
-        return null;
-    }
-    const parsed = parseInt(value, 10);
-    return isNaN(parsed) ? null : parsed;
+  if (value === null || value === undefined || value.trim() === "") {
+    return null;
+  }
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? null : parsed;
 };
 
 exports.bulkUploadLeads = async (req, res) => {
-    // Check if a file was uploaded
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
-    }
+  // Check if a file was uploaded
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded." });
+  }
 
-    const leads = [];
-    const validationErrors = [];
-    const bufferStream = new Readable();
-    bufferStream.push(req.file.buffer);
-    bufferStream.push(null);
+  const leads = [];
+  const validationErrors = [];
+  const bufferStream = new Readable();
+  bufferStream.push(req.file.buffer);
+  bufferStream.push(null);
 
-    let hasHeaders = false;
+  let hasHeaders = false;
 
-    // Parse the CSV file
-    bufferStream
-        .pipe(csv())
-        .on('headers', (headers) => {
-            // Validate headers
-            const missingHeaders = REQUIRED_HEADERS.filter(header => !headers.includes(header));
-            if (missingHeaders.length > 0) {
-                // To avoid sending response multiple times, push an error to the array
-                validationErrors.push(`Missing required headers: ${missingHeaders.join(', ')}`);
-                bufferStream.destroy(); // Stop parsing
-            }
-            hasHeaders = true;
-        })
-        .on('data', (data) => {
-            if (validationErrors.length > 0) return; // Skip data processing if headers are missing
+  // Parse the CSV file
+  bufferStream
+    .pipe(csv())
+    .on("headers", (headers) => {
+      // Validate headers
+      const missingHeaders = REQUIRED_HEADERS.filter(
+        (header) => !headers.includes(header)
+      );
+      if (missingHeaders.length > 0) {
+        // To avoid sending response multiple times, push an error to the array
+        validationErrors.push(
+          `Missing required headers: ${missingHeaders.join(", ")}`
+        );
+        bufferStream.destroy(); // Stop parsing
+      }
+      hasHeaders = true;
+    })
+    .on("data", (data) => {
+      if (validationErrors.length > 0) return; // Skip data processing if headers are missing
 
-            const leadData = {
-                user_id: req.user.userId,
-                first_name: data.first_name,
-                last_name: data.last_name,
-                email: data.email,
-                phone_number: data.phone_number,
-                status: data.status,
-                source: data.source,
-                type: data.type,
-                notes: data.notes,
-                property_type: data.property_type,
-                budget_range: data.budget_range,
-                preferred_location: data.preferred_location,
-                bedrooms: parseInteger(data.bedrooms),
-                bathrooms: parseInteger(data.bathrooms),
-                timeline: data.timeline,
-                social_media: data.social_media ? JSON.parse(data.social_media) : []
-            };
+      const leadData = {
+        user_id: req.user.userId,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        phone_number: data.phone_number,
+        status: data.status,
+        source: data.source,
+        type: data.type,
+        notes: data.notes,
+        property_type: data.property_type,
+        budget_range: data.budget_range,
+        preferred_location: data.preferred_location,
+        bedrooms: parseInteger(data.bedrooms),
+        bathrooms: parseInteger(data.bathrooms),
+        timeline: data.timeline,
+        social_media: data.social_media ? JSON.parse(data.social_media) : [],
+      };
 
-            // Create a temporary object for Joi validation without the user_id
-            const validationData = { ...leadData };
-            delete validationData.user_id;
+      // Create a temporary object for Joi validation without the user_id
+      const validationData = { ...leadData };
+      delete validationData.user_id;
 
-            // Validate each row against the Joi schema
-            const { error } = addLeadSchema.validate(validationData, { abortEarly: false });
+      // Validate each row against the Joi schema
+      const { error } = addLeadSchema.validate(validationData, {
+        abortEarly: false,
+      });
 
-            if (error) {
-                error.details.forEach(detail => {
-                    validationErrors.push(`Row ${leads.length + 2}: ${detail.message}`);
-                });
-            } else {
-                leads.push(leadData);
-            }
-        })
-        .on('end', async () => {
-            if (validationErrors.length > 0) {
-                return res.status(400).json({ error: validationErrors.join('; ') });
-            }
-
-            if (!hasHeaders) {
-                return res.status(400).json({ error: 'CSV file is empty or missing headers.' });
-            }
-
-            if (leads.length === 0) {
-                return res.status(400).json({ message: 'No valid leads found in the spreadsheet.' });
-            }
-
-            try {
-                // Bulk insert into Supabase
-                const { data, error } = await supabase
-                    .from('leads')
-                    .insert(leads)
-                    .select();
-
-                if (error) {
-                    throw error;
-                }
-
-                res.status(200).json({ message: `${leads.length} leads added successfully.`, leads: data });
-            } catch (dbError) {
-                // This will catch unique constraint errors, etc.
-                res.status(500).json({ error: dbError.message });
-            }
+      if (error) {
+        error.details.forEach((detail) => {
+          validationErrors.push(`Row ${leads.length + 2}: ${detail.message}`);
         });
-};
+      } else {
+        leads.push(leadData);
+      }
+    })
+    .on("end", async () => {
+      if (validationErrors.length > 0) {
+        return res.status(400).json({ error: validationErrors.join("; ") });
+      }
 
+      if (!hasHeaders) {
+        return res
+          .status(400)
+          .json({ error: "CSV file is empty or missing headers." });
+      }
+
+      if (leads.length === 0) {
+        return res
+          .status(400)
+          .json({ message: "No valid leads found in the spreadsheet." });
+      }
+
+      try {
+        // Bulk insert into Supabase
+        const { data, error } = await supabase
+          .from("leads")
+          .insert(leads)
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        res.status(200).json({
+          message: `${leads.length} leads added successfully.`,
+          leads: data,
+        });
+      } catch (dbError) {
+        // This will catch unique constraint errors, etc.
+        res.status(500).json({ error: dbError.message });
+      }
+    });
+};
 
 // Add a new lead
 exports.addLead = async (req, res) => {
-    const {
-        first_name,
-        last_name,
-        email,
-        phone_number,
-        status,
-        source,
-        type,
-        notes,
-        property_type,
-        budget_range,
-        preferred_location,
-        bedrooms,
-        bathrooms,
-        timeline,
-        social_media,
-        sendEmail,
-    } = req.body;
+  const {
+    first_name,
+    last_name,
+    email,
+    phone_number,
+    status,
+    source,
+    type,
+    notes,
+    property_type,
+    budget_range,
+    preferred_location,
+    bedrooms,
+    bathrooms,
+    timeline,
+    social_media,
+    sendEmail,
+  } = req.body;
 
-    console.log(req.body);
+  console.log(req.body);
 
-    try {
-        const { data, error } = await supabase
-            .from('leads')
-            .insert([{
-                user_id: req.user.userId,
-                first_name,
-                last_name,
-                email,
-                phone_number,
-                status,
-                source,
-                type,
-                notes,
-                property_type,
-                budget_range,
-                preferred_location,
-                bedrooms,
-                bathrooms,
-                timeline,
-                social_media
-            }])
-            .select();
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .insert([
+        {
+          user_id: req.user.userId,
+          first_name,
+          last_name,
+          email,
+          phone_number,
+          status,
+          source,
+          type,
+          notes,
+          property_type,
+          budget_range,
+          preferred_location,
+          bedrooms,
+          bathrooms,
+          timeline,
+          social_media,
+        },
+      ])
+      .select();
 
-        if (error) {
-            throw error;
-        }
-        
-        if (sendEmail) {
-            const fullName = `${first_name} ${last_name}`;
-            let city = preferred_location;
+    if (error) {
+      throw error;
+    }
 
-            if(city == undefined || !city){
-                city = 'your city';
-            }
+    const newLead = data[0]; 
+    const fullName = `${first_name} ${last_name}`;
+    const city = preferred_location || "your city";
 
-            await sendMail(
-                fullName,
-                "Welcome To Real Estate",
-                `It was great to meet you, ${fullName}.  
-We’ll help you find the best property in ${city}.  
-Please save my contact info so we can stay in touch.  
+    if (sendEmail) {
+      if (newLead.type?.toLowerCase() === "seller") {
+        await sendSellerMail(
+          fullName,
+          "Welcome to Our Seller Program",
+          `It was great connecting with you, ${fullName}. 
+We’ll guide you through the process of selling your property in ${city} and make sure you get the best possible outcome. 
+Talk soon!`,
+          email,
+          "stage 1"
+        );
+        //first email for buyer
+        scheduleSellerLeadEmails(newLead);
+      } else {
+        await sendMail(
+          fullName,
+          "Welcome To Real Estate",
+          `It was great to meet you, ${fullName}.  
+We’ll help you find the best property in ${city}.   
 Talk soon!  
 Michael K`,
-                email,
-                "Stage 1"
-            );
+          email,
+          "Stage 1"
+        );
 
-            scheduleLeadEmails(fullName, email, city);
-        }
-
-        res.status(201).json({ message: 'Lead added successfully.', lead: data[0] });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+        scheduleLeadEmails(fullName, email, city);
+      }
     }
+
+    res
+      .status(201)
+      .json({ message: "Lead added successfully.", lead: data[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get all leads
 exports.getAllLeads = async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('leads')
-            .select('*');
+  try {
+    const { data, error } = await supabase.from("leads").select("*");
 
-        if (error) {
-            throw error;
-        }
-
-        res.status(200).json({ leads: data });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    if (error) {
+      throw error;
     }
+
+    res.status(200).json({ leads: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get a single lead by ID
 exports.getLeadById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const { data, error } = await supabase
-            .from('leads')
-            .select('*')
-            .eq('id', id)
-            .single();
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-        if (error) {
-            throw error;
-        }
-
-        if (!data) {
-            return res.status(404).json({ message: 'Lead not found.' });
-        }
-
-        res.status(200).json({ lead: data });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    if (error) {
+      throw error;
     }
+
+    if (!data) {
+      return res.status(404).json({ message: "Lead not found." });
+    }
+
+    res.status(200).json({ lead: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get all leads with pagination, filtering, and search
@@ -259,14 +284,14 @@ exports.getAllLeads = async (req, res) => {
   const end = start + parsedLimit - 1;
 
   try {
-    let query = supabase.from('leads').select('*', { count: 'exact' });
+    let query = supabase.from("leads").select("*", { count: "exact" });
 
     // Apply filters
     if (status) {
-      query = query.eq('status', status);
+      query = query.eq("status", status);
     }
     if (source) {
-      query = query.eq('source', source);
+      query = query.eq("source", source);
     }
 
     // Search across first_name and last_name
@@ -296,58 +321,55 @@ exports.getAllLeads = async (req, res) => {
   }
 };
 
-
-
 // Get leads based on status or source (no pagination)
 exports.getFilteredLeads = async (req, res) => {
-    const { status, source } = req.query;
+  const { status, source } = req.query;
 
-    try {
-        let query = supabase.from('leads').select('*');
+  try {
+    let query = supabase.from("leads").select("*");
 
-        // Conditionally apply filters
-        if (status) {
-            query = query.eq('status', status);
-        }
-        if (source) {
-            query = query.eq('source', source);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-            throw error;
-        }
-
-        res.status(200).json({ leads: data });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    // Conditionally apply filters
+    if (status) {
+      query = query.eq("status", status);
     }
-};
+    if (source) {
+      query = query.eq("source", source);
+    }
 
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(200).json({ leads: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 // Get a single lead by ID
 exports.getLeadById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const { data, error } = await supabase
-            .from('leads')
-            .select('*')
-            .eq('id', id)
-            .single();
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-        if (error) {
-            throw error;
-        }
-
-        if (!data) {
-            return res.status(404).json({ message: 'Lead not found.' });
-        }
-
-        res.status(200).json({ lead: data });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    if (error) {
+      throw error;
     }
+
+    if (!data) {
+      return res.status(404).json({ message: "Lead not found." });
+    }
+
+    res.status(200).json({ lead: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 exports.saveFilteredLeadsController = async (req, res) => {
@@ -355,11 +377,11 @@ exports.saveFilteredLeadsController = async (req, res) => {
   const { filters, leadIds, listName } = req.body;
 
   if (!Array.isArray(leadIds)) {
-    return res.status(400).json({ message: 'leadIds must be an array' });
+    return res.status(400).json({ message: "leadIds must be an array" });
   }
 
   try {
-    const { data, error } = await supabase.from('saved_leads_lists').insert([
+    const { data, error } = await supabase.from("saved_leads_lists").insert([
       {
         user_id: userId,
         filters,
@@ -369,13 +391,15 @@ exports.saveFilteredLeadsController = async (req, res) => {
     ]);
 
     if (error) {
-      console.error('Supabase insert error:', error);
-      return res.status(500).json({ message: 'Failed to save filtered leads' });
+      console.error("Supabase insert error:", error);
+      return res.status(500).json({ message: "Failed to save filtered leads" });
     }
 
-    return res.status(201).json({ message: 'Filtered leads list saved successfully', data });
+    return res
+      .status(201)
+      .json({ message: "Filtered leads list saved successfully", data });
   } catch (err) {
-    console.error('Controller error:', err);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Controller error:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
