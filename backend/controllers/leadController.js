@@ -2,8 +2,9 @@ const { Readable } = require("stream");
 const csv = require("csv-parser");
 const supabase = require("../db/supabaseClient");
 const { addLeadSchema } = require("../schemas/leadSchema");
-const { sendMail, scheduleLeadEmails } = require("../mailer");
-const { sendSellerMail, scheduleSellerLeadEmails } = require("../mailer2");
+const { sendMail, scheduleLeadEmails } = require("../mailers/mailer");
+const { sendSellerMail, scheduleSellerLeadEmails } = require("../mailers/mailer2");
+const {initiateBuyerWorkflow, initiateSellerWorkflow} = require("../mailers/flodeskMailer");
 
 // Define required headers for the CSV file
 const REQUIRED_HEADERS = [
@@ -200,31 +201,36 @@ exports.addLead = async (req, res) => {
 
     if (sendEmail) {
       if (newLead.type?.toLowerCase() === "seller") {
-        await sendSellerMail(
-          fullName,
-          "Welcome to Our Seller Program",
-          `It was great connecting with you, ${fullName}. 
-We’ll guide you through the process of selling your property in ${city} and make sure you get the best possible outcome. 
-Talk soon!`,
-          email,
-          "stage 1"
-        );
-        //first email for buyer
-        scheduleSellerLeadEmails(newLead);
+        await initiateSellerWorkflow(newLead.email, newLead.first_name, newLead.last_name);
       } else {
-        await sendMail(
-          fullName,
-          "Welcome To Real Estate",
-          `It was great to meet you, ${fullName}.  
-We’ll help you find the best property in ${city}.   
-Talk soon!  
-Michael K`,
-          email,
-          "Stage 1"
-        );
-
-        scheduleLeadEmails(fullName, email, city);
+        await initiateBuyerWorkflow(newLead.email, newLead.first_name, newLead.last_name);
       }
+//       if (newLead.type?.toLowerCase() === "seller") {
+//         await sendSellerMail(
+//           fullName,
+//           "Welcome to Our Seller Program",
+//           `It was great connecting with you, ${fullName}. 
+// We’ll guide you through the process of selling your property in ${city} and make sure you get the best possible outcome. 
+// Talk soon!`,
+//           email,
+//           "stage 1"
+//         );
+//         //first email for buyer
+//         scheduleSellerLeadEmails(newLead);
+//       } else {
+//         await sendMail(
+//           fullName,
+//           "Welcome To Real Estate",
+//           `It was great to meet you, ${fullName}.  
+// We’ll help you find the best property in ${city}.   
+// Talk soon!  
+// Michael K`,
+//           email,
+//           "Stage 1"
+//         );
+
+//         scheduleLeadEmails(fullName, email, city);
+//       }
     }
 
     res

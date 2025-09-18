@@ -1,7 +1,7 @@
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 const cron = require("node-cron");
-const supabase = require("./db/supabaseClient");
+const supabase = require("../db/supabaseClient");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
