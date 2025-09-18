@@ -5,9 +5,21 @@ const addLeadSchema = Joi.object({
 
   first_name: Joi.string().trim().required(),
   last_name: Joi.string().trim().required(),
-  email: Joi.string().email().required(),
-  phone_number: Joi.string().pattern(/^[0-9]{10,15}$/).optional(),
-
+  email: Joi.string().email().required()
+  .trim()
+  .messages({
+    "any.required": "Email is required",
+    "string.email": "Please enter a valid email address"
+  }),
+  phone_number: Joi.string()
+    .trim()
+    .pattern(/^[0-9]{10,15}$/)
+    .required()
+    .messages({
+      "any.required": "Phone number is required",
+      "string.empty": "Phone number cannot be empty",
+      "string.pattern.base": "Please enter a valid phone number"
+    }),
   status: Joi.string().trim().allow('').optional(),
   source: Joi.string().trim().allow('').optional(),
   type: Joi.string().trim().allow('').optional(),

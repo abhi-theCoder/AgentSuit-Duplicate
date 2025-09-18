@@ -89,7 +89,7 @@ exports.sendOTP = async (req, res) => {
             await twilioClient.messages.create({
                 body: `Your Agentsuit OTP is: ${newOtp}. It expires in 5 minutes.`,
                 from: process.env.TWILIO_PHONE_NUMBER,
-                to: `+1${identifier}`,
+                to: `+91${identifier}`,
             });
         }
 

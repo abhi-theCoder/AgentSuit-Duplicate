@@ -384,8 +384,10 @@ const SignupPage = () => {
                 countryid={US_COUNTRY_ID}
                 onChange={handleStateChange}
                 placeHolder="Select State"
+                inputClassName="w-full bg-[#2c2c2c]  text-white rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-yellow-600"
                 value={formData.stateid}
               />
+              
               {validationErrors.state && <p className="text-red-500 text-sm mt-1">{validationErrors.state}</p>}
             </div>
 
@@ -399,46 +401,12 @@ const SignupPage = () => {
                 placeHolder="Select City"
                 value={formData.cityid}
                 disabled={!formData.stateid}
+                
+                inputClassName="w-full bg-[#2c2c2c] text-white rounded-md p-3 
+                  focus:outline-none focus:ring-2 focus:ring-yellow-600"
               />
               {validationErrors.city && <p className="text-red-500 text-sm mt-1">{validationErrors.city}</p>}
             </div>
-
-            {/* CSS to fix dropdown background and text color */}
-            <style jsx global>{`
-              .stdropdown-menu {
-                position: absolute;
-                transform: translateY(4px);
-                width: 100%;
-                border: 1px solid #ccc;
-                border-radius: 5px;
-                overflow: auto;
-                max-height: 150px;
-                background-color: #060606ff;
-                z-index: 99;
-              }
-              .dynamic-select-wrapper .select {
-                background-color: #2c2c2c !important;
-                color: white !important;
-                border-radius: 0.375rem;
-                padding: 0.75rem;
-                border: none;
-                width: 100%;
-              }
-              .dynamic-select-wrapper .select:focus {
-                outline: none;
-                box-shadow: 0 0 0 2px #d97706 !important; /* Corresponds to focus:ring-yellow-600 */
-              }
-              .dynamic-select-wrapper .list,
-              .dynamic-select-wrapper .list-item {
-                background-color: #2c2c2c !important;
-                color: white !important;
-                border: 1px solid #3c3c3c;
-              }
-              .dynamic-select-wrapper .list-item:hover {
-                background-color: #3c3c3c !important;
-                color: white !important;
-              }
-            `}</style>
             
             <div className="col-span-1 md:col-span-1">
               <label className="block text-sm text-gray-400 mb-1">Password</label>
@@ -678,6 +646,49 @@ const SignupPage = () => {
           background-color: #3c3c3c;
         }
       `}</style>
+
+      {/* CSS to fix dropdown background and text color */}
+        <style jsx global>{`
+        
+          .stdropdown-menu {
+            position: absolute;
+            transform: translateY(4px);
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: auto;
+            max-height: 150px;
+            background-color: #060606ff;
+            z-index: 99;
+          }
+          .dynamic-select-wrapper .select {
+            background-color: #2c2c2c !important;
+            color: white !important;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            border: none;
+            width: 100%;
+          }
+          .dynamic-select-wrapper .select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #d97706 !important; /* Corresponds to focus:ring-yellow-600 */
+          }
+          .dynamic-select-wrapper .list,
+          .dynamic-select-wrapper .list-item {
+            background-color: #2c2c2c !important;
+            color: white !important;
+            border: 1px solid #3c3c3c;
+          }
+          .dynamic-select-wrapper .list-item:hover {
+            background-color: #3c3c3c !important;
+            color: white !important;
+            
+          }
+          .stsearch-box input{
+            background: #1e1e1e;
+            border : none;
+          }
+        `}</style>
     </div>
   );
 };

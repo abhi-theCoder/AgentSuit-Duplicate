@@ -87,15 +87,15 @@ const buildPayload = (data) => {
   };
 
   if (data.leadType === "Buyer") {
-Object.assign(payload, {
-      property_type: data.propertyType,
-      budget_range: data.budgetRange,
-      preferred_location: data.preferredLocation,
-      bedrooms: data.bedrooms,
-      bathrooms: data.bathrooms,
-      timeline: data.timeline,
-    });
-  }
+    Object.assign(payload, {
+        property_type: data.propertyType,
+        budget_range: data.budgetRange,
+        preferred_location: data.preferredLocation,
+        bedrooms: data.bedrooms,
+        bathrooms: data.bathrooms,
+        timeline: data.timeline,
+      });
+    }
 
   if (data.leadType === "Seller") {
     Object.assign(payload, {
@@ -139,20 +139,22 @@ Object.assign(payload, {
 
 
       const doAddWorkflow = window.confirm("Do you also want to add a workflow to this lead?");
-let payload = buildPayload(formData);
-    if (formData.leadType === "Buyer" || formData.leadType === "Investor") {
-      const filteredSocialMedia = formData.socialMedia.filter(
-        (social) => social.platform && social.handle
-      );
-      if (filteredSocialMedia.length) {
-        payload.social_media = filteredSocialMedia;
+      let payload = buildPayload(formData);
+      if (formData.leadType === "Buyer" || formData.leadType === "Investor") {
+        const filteredSocialMedia = formData.socialMedia.filter(
+          (social) => social.platform && social.handle
+        );
+        if (filteredSocialMedia.length) {
+          payload.social_media = filteredSocialMedia;
+        }
       }
-    }
 
-payload = {
-  ...payload,
-  sendEmail: doAddWorkflow,
-};
+      payload = {
+        ...payload,
+        sendEmail: doAddWorkflow,
+      };
+
+      console.log('payload:', payload);
       const response = await axios.post('/api/leads', payload, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
@@ -168,7 +170,7 @@ payload = {
       
     } catch (err) {
       console.error('Failed to create lead:', err);
-      const errorMessage = err.response?.data?.error || 'An unknown error occurred.';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.data?.errors[0]?.message || 'An unknown error occurred.';
       showNotification(`Failed to create lead: ${errorMessage}`, 'error');
     } finally {
       setIsLoading(false);
