@@ -22,7 +22,7 @@ const twilioClient = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWIL
  */
 exports.sendOTP = async (req, res) => {
     const { identifier, type } = req.body;
-
+    
     if (!identifier || !type) {
         return res.status(400).json({ error: 'Identifier and type are required.' });
     }

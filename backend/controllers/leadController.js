@@ -4,7 +4,10 @@ const supabase = require("../db/supabaseClient");
 const { addLeadSchema } = require("../schemas/leadSchema");
 const { sendMail, scheduleLeadEmails } = require("../mailers/mailer");
 const { sendSellerMail, scheduleSellerLeadEmails } = require("../mailers/mailer2");
-const {initiateBuyerWorkflow, initiateSellerWorkflow} = require("../mailers/flodeskMailer");
+const { initiateBuyerWorkflow, initiateSellerWorkflow } = require("../mailers/flodeskMailer")
+const { scheduleLeadTexts } = require("../textMailers/buyerSendText"); // adjust path
+const { scheduleSellerTexts  } = require("../textMailers/SellerSendText2")
+
 
 // Define required headers for the CSV file
 const REQUIRED_HEADERS = [
@@ -137,9 +140,11 @@ exports.bulkUploadLeads = async (req, res) => {
           leads: data,
         });
       } catch (dbError) {
-        // This will catch unique constraint errors, etc.
-        res.status(500).json({ error: dbError.message });
-      }
+          if (dbError.code === "23505") {
+            return res.status(409).json({ message: "Email already exists" });
+          }
+          res.status(500).json({ error: dbError.message });
+        }
     });
 };
 
@@ -199,6 +204,15 @@ exports.addLead = async (req, res) => {
     const fullName = `${first_name} ${last_name}`;
     const city = preferred_location || "your city";
 
+    if(sendEmail){
+      if (newLead.type?.toLowerCase() === "seller") {
+        scheduleSellerTexts(fullName, phone_number, city);
+      } else {
+        scheduleLeadTexts(fullName, phone_number, city);
+      }
+    }
+
+    console.log("Helloooooooo object");
     if (sendEmail) {
       if (newLead.type?.toLowerCase() === "seller") {
         await initiateSellerWorkflow(newLead.email, newLead.first_name, newLead.last_name);
@@ -228,12 +242,10 @@ exports.addLead = async (req, res) => {
 //           email,
 //           "Stage 1"
 //         );
-
 //         scheduleLeadEmails(fullName, email, city);
 //       }
     }
-
-    res
+     res
       .status(201)
       .json({ message: "Lead added successfully.", lead: data[0] });
   } catch (error) {
