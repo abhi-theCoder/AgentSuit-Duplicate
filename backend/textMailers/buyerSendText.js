@@ -4,6 +4,14 @@ const supabase = require("../db/supabaseClient");
 const cron = require("node-cron");
 const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
+console.log(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN, process.env.TWILIO_PHONE_NUMBER);
+
+// Verify Twilio credentials
+client.api.accounts(process.env.TWILIO_ACCOUNT_SID)
+  .fetch()
+  .then(account => console.log("✅ Connected as:", account.friendlyName))
+  .catch(err => console.error("❌ Failed:", err));
+
 async function sendSMS(name, text, phone, stage) {
   try {
      let message = await client.messages.create({
@@ -111,4 +119,3 @@ Did you see it?`
 }
 
 module.exports = { sendSMS, scheduleLeadTexts };
-

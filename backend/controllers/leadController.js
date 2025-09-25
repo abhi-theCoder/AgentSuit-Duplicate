@@ -5,8 +5,8 @@ const { addLeadSchema } = require("../schemas/leadSchema");
 const { sendMail, scheduleLeadEmails } = require("../mailers/mailer");
 const { sendSellerMail, scheduleSellerLeadEmails } = require("../mailers/mailer2");
 const { initiateBuyerWorkflow, initiateSellerWorkflow } = require("../mailers/flodeskMailer")
-const { scheduleLeadTexts } = require("../textMailers/buyerSendText"); // adjust path
-const { scheduleSellerTexts  } = require("../textMailers/SellerSendText2")
+const { scheduleLeadTexts } = require("../textMailers/buyerSendText");
+const { scheduleSellerTexts  } = require("../textMailers/SellerSendText")
 
 
 // Define required headers for the CSV file
