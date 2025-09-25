@@ -299,7 +299,7 @@ exports.getAllLeads = async (req, res) => {
   const end = start + parsedLimit - 1;
 
   try {
-    let query = supabase.from("leads").select("*", { count: "exact" });
+    let query = supabase.from("leads").select("*", { count: "exact" }).eq("user_id", req.user.userId);;
 
     // Apply filters
     if (status) {
