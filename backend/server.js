@@ -4,6 +4,7 @@ const leadRoutes = require('./routes/leadRoutes');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5002;
+const { schedulePendingLeadTexts } = require("./textMailers/updatedSMSText");
 
 app.use(express.json());
 app.use(cors());
@@ -21,4 +22,6 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
+    console.log("When server will start Here I will call the function to process pending SMS");
+    schedulePendingLeadTexts(); // Call the function to process pending SMS on server start
 });

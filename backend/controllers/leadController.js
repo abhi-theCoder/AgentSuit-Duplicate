@@ -7,7 +7,7 @@ const { sendSellerMail, scheduleSellerLeadEmails } = require("../mailers/mailer2
 const { initiateBuyerWorkflow, initiateSellerWorkflow } = require("../mailers/flodeskMailer")
 const { scheduleLeadTexts } = require("../textMailers/buyerSendText");
 const { scheduleSellerTexts  } = require("../textMailers/SellerSendText")
-
+const { sendImmediateStage1 } = require("../textMailers/updatedSMSText");
 
 // Define required headers for the CSV file
 const REQUIRED_HEADERS = [
@@ -204,12 +204,9 @@ exports.addLead = async (req, res) => {
     const fullName = `${first_name} ${last_name}`;
     const city = preferred_location || "your city";
 
-    if(sendEmail){
-      if (newLead.type?.toLowerCase() === "seller") {
-        scheduleSellerTexts(fullName, phone_number, city);
-      } else {
-        scheduleLeadTexts(fullName, phone_number, city);
-      }
+    // ✅ Immediately send Stage 1
+    if (sendEmail) {
+      await sendImmediateStage1(newLead);
     }
 
     console.log("Helloooooooo object");
