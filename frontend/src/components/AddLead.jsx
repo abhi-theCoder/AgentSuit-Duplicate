@@ -42,6 +42,19 @@ renovations: '',           // ← Add this
 });
 
 
+  const formatPhoneNumber = (value) => {
+    if (!value) return value;
+
+    // Keep only digits, max 10
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+
+    const len = digits.length;
+
+    if (len < 4) return `(${digits}`;
+    if (len < 7) return `(${digits.slice(0, 3)})-${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)})-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+
   const showNotification = (message, type) => {
     setNotification({ message, type });
     setTimeout(() => {
@@ -51,7 +64,13 @@ renovations: '',           // ← Add this
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const processedValue = ['bedrooms', 'bathrooms'].includes(name) ? (value !== '' ? parseInt(value, 10) : '') : value;
+    let processedValue = ['bedrooms', 'bathrooms'].includes(name) ? (value !== '' ? parseInt(value, 10) : '') : value;
+
+    if(name == 'phoneNumber') {
+      // Format live while typing
+      processedValue = formatPhoneNumber(value);
+    }
+
     setFormData((prev) => ({ ...prev, [name]: processedValue }));
   };
 
@@ -79,7 +98,8 @@ const buildPayload = (data) => {
     first_name: data.firstName,
     last_name: data.lastName,
     email: data.email,
-    phone_number: data.phoneNumber,
+    // phone_number: data.phoneNumber,
+    phone_number: data.phoneNumber.replace(/\D/g, ""),
     type: data.leadType,
     source: data.leadSource,
     status: data.leadStatus,
