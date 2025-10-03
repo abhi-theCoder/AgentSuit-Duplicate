@@ -8,6 +8,7 @@ const { initiateBuyerWorkflow, initiateSellerWorkflow } = require("../mailers/fl
 const { scheduleLeadTexts } = require("../textMailers/buyerSendText");
 const { scheduleSellerTexts  } = require("../textMailers/SellerSendText")
 const { sendImmediateStage1 } = require("../textMailers/updatedSMSText");
+const {initiateBuyerWorkflowForProposal, initiateSellerWorkflowForProposal} = require("../mailers/flowdeskProposalMailer");
 
 // Define required headers for the CSV file
 const REQUIRED_HEADERS = [
@@ -241,6 +242,78 @@ exports.addLead = async (req, res) => {
 //         );
 //         scheduleLeadEmails(fullName, email, city);
 //       }
+    }
+     res
+      .status(201)
+      .json({ message: "Lead added successfully.", lead: data[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Add a new lead for proposal (without initiating workflow) just send a different sms from flodesk
+exports.addLeadForProposal = async (req, res) => {
+  const {
+    first_name,
+    last_name,
+    email,
+    phone_number,
+    status,
+    source,
+    type,
+    notes,
+    property_type,
+    budget_range,
+    preferred_location,
+    bedrooms,
+    bathrooms,
+    timeline,
+    social_media,
+    sendEmail,
+  } = req.body;
+
+  console.log(req.body);
+
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .insert([
+        {
+          user_id: req.user.userId,
+          first_name,
+          last_name,
+          email,
+          phone_number,
+          status,
+          source,
+          type,
+          notes,
+          property_type,
+          budget_range,
+          preferred_location,
+          bedrooms,
+          bathrooms,
+          timeline,
+          social_media,
+        },
+      ])
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    const newLead = data[0]; 
+    const fullName = `${first_name} ${last_name}`;
+    const city = preferred_location || "your city";
+
+    console.log("Helloooooooo object");
+    if (sendEmail) {
+      if (newLead.type?.toLowerCase() === "seller") {
+        await initiateSellerWorkflowForProposal(newLead.email, newLead.first_name, newLead.last_name);
+      } else {
+        await initiateBuyerWorkflowForProposal(newLead.email, newLead.first_name, newLead.last_name);
+      }
     }
      res
       .status(201)

@@ -15,6 +15,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.post('/', authenticateToken, validate(addLeadSchema), checkDuplicatePhoneOrEmail, leadController.addLead);
+router.post('/add-lead-for-proposal', authenticateToken, validate(addLeadSchema), checkDuplicatePhoneOrEmail, leadController.addLeadForProposal);
 
 router.post('/add-lead-by-ai', aiLeadController.addLeadByAI);
 
