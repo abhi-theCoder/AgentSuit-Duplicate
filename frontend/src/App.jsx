@@ -7,6 +7,7 @@ import AddLeadPage from './components/AddLead.jsx';
 import LeadPage from './components/Lead.jsx';
 import Layout from './components/Layout.jsx';
 import AddBulkLeadPage from './components/AddBulkLead.jsx';
+import UploadPdfPage from './components/UploadPdfPage.jsx';
 
 // Helper component for private routes
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -44,6 +45,7 @@ const App = () => {
 
           {/* Catch-all route for unmatched paths */}
           <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="upload-pdf" element={<UploadPdfPage />} />
         </Routes>
       </BrowserRouter>
     </div>
