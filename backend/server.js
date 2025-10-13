@@ -5,12 +5,13 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5002;
 const { schedulePendingLeadTexts } = require("./textMailers/updatedSMSText");
+const workflowRoutes = require("./routes/workflow.js"); // ✅ require instead of import
 
 app.use(express.json());
 app.use(cors());
 // Routes
 app.use('/api/agents', agentRoutes);
-
+app.use("/api", workflowRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/otp', require('./routes/otpRoutes'));
 // app.use('/api/ai-assistant', require('./routes/aiLeads'));

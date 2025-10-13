@@ -8,6 +8,7 @@ import LeadPage from './components/Lead.jsx';
 import Layout from './components/Layout.jsx';
 import AddBulkLeadPage from './components/AddBulkLead.jsx';
 import UploadPdfPage from './components/UploadPdfPage.jsx';
+import Workflows from "../src/components/workflow.jsx";
 
 // Helper component for private routes
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -41,6 +42,7 @@ const App = () => {
             <Route path="leads" element={<LeadPage />} />
             <Route path="add-lead" element={<AddLeadPage />} />
             <Route path="add-bulk-lead" element={<AddBulkLeadPage />} />
+            <Route path="/workflows" element={<Workflows />} />
           </Route>
 
           {/* Catch-all route for unmatched paths */}
