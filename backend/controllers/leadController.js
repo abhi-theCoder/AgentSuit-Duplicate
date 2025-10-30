@@ -3,21 +3,13 @@ const cron = require("node-cron");
 const csv = require("csv-parser");
 const supabase = require("../db/supabaseClient");
 const { addLeadSchema } = require("../schemas/leadSchema");
-const { sendMail, scheduleLeadEmails } = require("../mailers/mailer");
 const {
   sendSellerMail,
   scheduleSellerLeadEmails,
 } = require("../mailers/mailer2");
 // const { initiateBuyerWorkflow, initiateSellerWorkflow } = require("../mailers/flowdeskMailer")
-const { scheduleBuyerTexts } = require("../textmailers/buyerSendText");
-const { scheduleSellerTexts } = require("../textmailers/SellerSendText2");
-const { sendSMS } = require("../textmailers/SellerSendText2"); // adjust path if needed
 
-// const {triggerRetailAIAgent  } = require("./triggerAIAgentCall")
-// triggerRetailAIAgent({ phone: "9122503536", name: "Rahul Sharma" });
-// const { triggerRetailAIWebhook } = require("../routes/retailAIWebhook");
-// const { triggerRetailAIAgent } = require("../controllers/triggerAIAgentCall");
-const { processPendingSMS } = require("../textmailers/SellerSendText2");
+
 
 // Define required headers for the CSV file
 const REQUIRED_HEADERS = [
@@ -179,10 +171,6 @@ exports.sendTestSMS = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-cron.schedule("* * * * *", async () => {
-  console.log("⏰ Running SMS scheduler...");
-  await processPendingSMS();
-});
 // Add a new lead
 exports.addLead = async (req, res) => {
   const {
@@ -245,8 +233,8 @@ exports.addLead = async (req, res) => {
     const fullName = `${first_name} ${last_name}`;
     const city = preferred_location || "your city";
 
-    if (newLead.type?.toLowerCase() === "seller") {
-      await scheduleSellerTexts(newLead); // schedules all stages in DB
+    //if (newLead.type?.toLowerCase() === "seller") {
+      //await scheduleSellerTexts(newLead); // schedules all stages in DB
 
       // scheduleSellerTexts(fullName, phone_number, city);
       // await triggerRetailAIAgent({ phone: phone_number, name: fullName });
@@ -258,13 +246,13 @@ exports.addLead = async (req, res) => {
       // } catch (err) {
       //   console.error(" Error triggering Retail AI call:", err);
       // }
-    } else {
-      await scheduleBuyerTexts(
-        newLead,
-        newLead.preferred_location || "your city"
-      );
+    //} else {
+      //await scheduleBuyerTexts(
+       // newLead,
+       // newLead.preferred_location || "your city"
+      //);
       // await triggerRetailAIAgent({ phone: phone_number, name: fullName });
-    }
+    //}
 
     if (sendEmail) {
       if (newLead.type?.toLowerCase() === "seller") {

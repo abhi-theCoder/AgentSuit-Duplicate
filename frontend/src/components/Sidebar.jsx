@@ -1,14 +1,19 @@
 import React from 'react';
 import { TrendingUp, User, Phone, Briefcase, Activity, Calendar, ClipboardList, CircleUser, Settings, HelpCircle, X, LogOut } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Megaphone, Globe } from 'lucide-react';
+
 
 const menuItems = [
   { name: 'Dashboard', icon: <TrendingUp size={18} />, link: '/dashboard' },
   { name: 'Leads', icon: <User size={18} />, link: '/leads' },
   { name: 'Workflows', icon: <Briefcase size={18} />, link: '/workflows' },
+    { name: 'Campaigns', icon: <Megaphone size={18} />, link: '/campaigns' },
+  { name: 'Landing Pages', icon: <Globe size={18} />, link: '/landing-page' },
+  
   { name: 'Appointments', icon: <Calendar size={18} />, link: '/appointments' },
   { name: 'Phone agent', icon: <Phone size={18} />, link: '/ai/phone-agent' },
-  { name: 'Market insights', icon: <Activity size={18} />, link: '/ai/market-insights' },
+  { name: 'Market insights', icon: <Activity size={18} />, link: '/market-insights' },
   {
     name: 'Analytics',
     subItems: [
